@@ -1,8 +1,64 @@
+import { useState } from "react";
 import DocumentCard from "../components/DocumentCard.jsx";
 import UploadBox from "../components/UploadBox.jsx";
-import { documents } from "../data/mockData.js";
+import { loadInitialData, saveMedicalReports } from "../utils/storage.js";
+
+function formatFileSize(sizeInBytes) {
+  if (sizeInBytes < 1024) {
+    return `${sizeInBytes} B`;
+  }
+
+  if (sizeInBytes < 1024 * 1024) {
+    return `${(sizeInBytes / 1024).toFixed(1)} KB`;
+  }
+
+  return `${(sizeInBytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function formatDisplayDate(date) {
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  }).format(date);
+}
+
+function getTitleFromFileName(fileName) {
+  return fileName.replace(/\.[^/.]+$/, "").replace(/[-_]+/g, " ");
+}
 
 export default function UploadDocuments() {
+  const [uploadedDocuments, setUploadedDocuments] = useState(
+    () => loadInitialData().medicalReports,
+  );
+
+  function handleUpload(files, { category, notes }) {
+    const uploadedAt = new Date();
+    const newDocuments = files.map((file, index) => {
+      const title = getTitleFromFileName(file.name);
+
+      return {
+        id: `${uploadedAt.getTime()}-${index}`,
+        fileName: file.name,
+        title,
+        name: title,
+        type: category,
+        category,
+        fileType: file.type || file.name.split(".").pop()?.toUpperCase() || "Unknown",
+        fileSize: formatFileSize(file.size),
+        uploadedAt: uploadedAt.toISOString(),
+        date: formatDisplayDate(uploadedAt),
+        notes,
+        status: "Pending review",
+        aiSummary: "Uploaded for AI-assisted review. Not a medical diagnosis.",
+      };
+    });
+
+    const updatedDocuments = [...newDocuments, ...uploadedDocuments];
+    setUploadedDocuments(updatedDocuments);
+    saveMedicalReports(updatedDocuments);
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -13,12 +69,12 @@ export default function UploadDocuments() {
         </p>
       </div>
 
-      <UploadBox />
+      <UploadBox onUpload={handleUpload} />
 
       <section>
         <h2 className="mb-4 text-xl font-bold text-slate-950">Uploaded files</h2>
         <div className="grid gap-4 lg:grid-cols-2">
-          {documents.map((document) => (
+          {uploadedDocuments.map((document) => (
             <DocumentCard key={document.id} document={document} />
           ))}
         </div>

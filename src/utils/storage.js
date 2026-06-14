@@ -100,7 +100,8 @@ export function saveUploadedDocumentMetadata(documentMetadata) {
   const nextReport = {
     id: Date.now(),
     uploadedAt: new Date().toISOString(),
-    status: "Saved",
+    notes: "Uploaded for AI-assisted review. Not a medical diagnosis.",
+    status: "Pending review",
     ...documentMetadata,
   };
   const updatedReports = [nextReport, ...currentReports];
@@ -111,4 +112,3 @@ export function saveUploadedDocumentMetadata(documentMetadata) {
 export function saveAppointments(updatedAppointments) {
   return writeArray(STORAGE_KEYS.appointments, updatedAppointments);
 }
-
