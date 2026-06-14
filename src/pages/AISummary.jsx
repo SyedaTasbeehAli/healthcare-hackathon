@@ -1,7 +1,9 @@
 import SummaryCard from "../components/SummaryCard.jsx";
-import { summaries } from "../data/mockData.js";
+import { useMedicalReports } from "../context/MedicalReportsContext.jsx";
 
 export default function AISummary() {
+  const { summaryItems, pendingReportCount } = useMedicalReports();
+
   return (
     <div className="space-y-6">
       <div>
@@ -13,11 +15,24 @@ export default function AISummary() {
         </p>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        {summaries.map((summary) => (
-          <SummaryCard key={summary.document} summary={summary} />
-        ))}
-      </div>
+      {summaryItems.length === 0 ? (
+        <div className="content-card rounded-2xl border-dashed p-10 text-center">
+          <h2 className="text-xl font-bold text-slate-950">No summaries are ready yet</h2>
+          <p className="mx-auto mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+            Upload a medical document to start the AI review flow. Completed summaries will appear
+            here automatically.
+            {pendingReportCount > 0
+              ? ` ${pendingReportCount} report${pendingReportCount > 1 ? "s are" : " is"} still processing.`
+              : ""}
+          </p>
+        </div>
+      ) : (
+        <div className="grid gap-4 lg:grid-cols-2">
+          {summaryItems.map((summary) => (
+            <SummaryCard key={summary.id} summary={summary} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

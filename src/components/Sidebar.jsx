@@ -3,11 +3,12 @@ import {
   Clock3,
   FileSearch,
   Files,
+  HeartPulse,
   LayoutDashboard,
   LogOut,
   Pill,
-  Share2,
   ShieldPlus,
+  Stethoscope,
   UploadCloud,
   UsersRound,
   X,
@@ -23,8 +24,9 @@ const links = [
   { label: "Timeline", path: "/timeline", icon: Clock3 },
   { label: "Search", path: "/search", icon: FileSearch },
   { label: "Medicines", path: "/medicines", icon: Pill },
-  { label: "Profiles", path: "/profile", icon: UsersRound },
-  { label: "Doctor Share", path: "/doctor-share", icon: Share2 },
+  { label: "Family Medical History", path: "/profile", icon: UsersRound },
+  { label: "Medical Profile", path: "/medical-profile", icon: HeartPulse },
+  { label: "Book Appointment", path: "/book-appointment", icon: Stethoscope },
 ];
 
 export default function Sidebar({ isOpen, onClose }) {

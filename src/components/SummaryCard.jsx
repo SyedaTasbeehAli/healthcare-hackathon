@@ -19,7 +19,7 @@ export default function SummaryCard({ summary }) {
 
       <div className="mt-5 rounded-lg bg-slate-50 p-4">
         <p className="text-sm font-semibold text-slate-800">AI Summary</p>
-        <p className="mt-2 leading-7 text-slate-700">{summary.summary}</p>
+        <p className="mt-2 whitespace-pre-line leading-7 text-slate-700">{summary.summary}</p>
       </div>
 
       <div className="mt-4 flex gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">

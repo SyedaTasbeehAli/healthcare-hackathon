@@ -5,9 +5,9 @@ export default function Profile() {
     <div className="space-y-6">
       <div>
         <p className="text-sm font-semibold text-brand-teal">Family health profile</p>
-        <h1 className="mt-1 text-3xl font-bold text-slate-950">Manage profiles</h1>
+        <h1 className="mt-1 text-3xl font-bold text-slate-950">Family medical history</h1>
         <p className="mt-2 max-w-2xl text-slate-600">
-          Keep medical records grouped for self, parents, and children.
+          Keep family members and their stored record counts grouped for quick history reference.
         </p>
       </div>
 

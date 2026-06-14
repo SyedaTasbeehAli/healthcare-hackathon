@@ -1,10 +1,15 @@
 export default function TimelineCard({ event, isLast }) {
   const Icon = event.icon;
+  const iconWrapperClass =
+    event.iconWrapperClass ||
+    "bg-brand-blue text-white shadow-lg shadow-blue-200";
 
   return (
     <div className="relative flex gap-4">
       <div className="flex flex-col items-center">
-        <div className="z-10 flex h-11 w-11 items-center justify-center rounded-lg bg-brand-blue text-white shadow-lg shadow-blue-200">
+        <div
+          className={`z-10 flex h-11 w-11 items-center justify-center rounded-lg ${iconWrapperClass}`}
+        >
           <Icon size={21} />
         </div>
         {!isLast && <div className="h-full w-px bg-slate-200" />}

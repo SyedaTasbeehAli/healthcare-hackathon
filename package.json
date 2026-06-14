@@ -10,15 +10,17 @@
   },
   "dependencies": {
     "@vitejs/plugin-react": "latest",
-    "vite": "latest",
+    "lucide-react": "latest",
+    "pdfjs-dist": "^6.0.227",
     "react": "latest",
     "react-dom": "latest",
     "react-router-dom": "latest",
-    "lucide-react": "latest"
+    "tesseract.js": "^7.0.0",
+    "vite": "latest"
   },
   "devDependencies": {
-    "tailwindcss": "^3.4.17",
+    "autoprefixer": "latest",
     "postcss": "latest",
-    "autoprefixer": "latest"
+    "tailwindcss": "^3.4.17"
   }
 }
