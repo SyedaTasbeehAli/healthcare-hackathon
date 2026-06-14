@@ -1,12 +1,13 @@
 import { FileText } from "lucide-react";
 import { useState } from "react";
+import ApiKeyCard from "../components/ApiKeyCard.jsx";
 import DocumentCard from "../components/DocumentCard.jsx";
 import UploadBox, { medicalReportCategories } from "../components/UploadBox.jsx";
 import { useAiConfig } from "../context/AiConfigContext.jsx";
 import { useMedicalReports } from "../context/MedicalReportsContext.jsx";
 
 export default function UploadDocuments() {
-  const { hasApiKey } = useAiConfig();
+  const { apiKeySource, hasApiKey } = useAiConfig();
   const { reports, currentTime, addUploadedDocuments, removeReport } = useMedicalReports();
   const [activeFilter, setActiveFilter] = useState("");
 
@@ -32,6 +33,8 @@ export default function UploadDocuments() {
           searchable records.
         </p>
       </div>
+
+      {apiKeySource !== "environment" && <ApiKeyCard />}
 
       <UploadBox
         activeFilter={activeFilter}
