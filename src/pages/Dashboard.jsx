@@ -1,10 +1,13 @@
-import { Activity, Brain, FileText, LayoutGrid, Pill } from "lucide-react";
+import { Activity, Brain, Download, FileText, LayoutGrid, LoaderCircle, Pill } from "lucide-react";
 import { useState } from "react";
 import DocumentCard from "../components/DocumentCard.jsx";
 import MedicineCard from "../components/MedicineCard.jsx";
 import ReportSummaryModal from "../components/ReportSummaryModal.jsx";
+import { useAiConfig } from "../context/AiConfigContext.jsx";
 import { useMedicines } from "../context/MedicinesContext.jsx";
+import { useMedicalProfile } from "../context/MedicalProfileContext.jsx";
 import { useMedicalReports } from "../context/MedicalReportsContext.jsx";
+import { generateDoctorShareSummary } from "../services/medicalAi.js";
 
 const toneClasses = {
   blue: "bg-blue-50 text-blue-700",
@@ -27,7 +30,11 @@ export default function Dashboard() {
     removeReport,
   } = useMedicalReports();
   const { medicines } = useMedicines();
+  const { hasApiKey, openRouterApiKey } = useAiConfig();
+  const { allergies, bloodGroup, chronicDiseases } = useMedicalProfile();
   const [selectedDocument, setSelectedDocument] = useState(null);
+  const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
+  const [summaryError, setSummaryError] = useState("");
 
   const overviewStats = [
     { label: "Total Reports", value: String(totalReportCount), icon: FileText, tone: "blue" },
@@ -48,6 +55,85 @@ export default function Dashboard() {
     return "Upload your first report to start the review pipeline";
   }
 
+  function formatSummarySection(title, items) {
+    if (!items.length) {
+      return `${title}\n- No items recorded.`;
+    }
+
+    return `${title}\n${items.map((item) => `- ${item}`).join("\n")}`;
+  }
+
+  function buildDownloadText(summary) {
+    return [
+      "MediVault AI Doctor Summary",
+      `Generated: ${new Date().toLocaleString()}`,
+      "",
+      "AI-assisted summary for doctor discussion. Not a medical diagnosis.",
+      "",
+      "Overview",
+      summary.overview || "No overview was generated.",
+      "",
+      formatSummarySection("Reports reviewed", summary.reportsReviewed),
+      "",
+      formatSummarySection("Current medicines", summary.currentMedicines),
+      "",
+      formatSummarySection("Allergies and profile conditions", summary.allergiesAndConditions),
+      "",
+      formatSummarySection("Possible concerns", summary.possibleConcerns),
+      "",
+      formatSummarySection(
+        "Suggested doctor discussion points",
+        summary.suggestedDoctorDiscussionPoints,
+      ),
+      "",
+      "Safety note",
+      summary.safetyNote || "Not a medical diagnosis.",
+    ].join("\n");
+  }
+
+  function downloadTextFile(fileName, textContent) {
+    const fileBlob = new Blob([textContent], { type: "text/plain;charset=utf-8" });
+    const downloadUrl = URL.createObjectURL(fileBlob);
+    const downloadLink = document.createElement("a");
+
+    downloadLink.href = downloadUrl;
+    downloadLink.download = fileName;
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    downloadLink.remove();
+    URL.revokeObjectURL(downloadUrl);
+  }
+
+  async function handleDownloadSummary() {
+    if (!hasApiKey || isGeneratingSummary) {
+      return;
+    }
+
+    setSummaryError("");
+    setIsGeneratingSummary(true);
+
+    try {
+      const summary = await generateDoctorShareSummary({
+        apiKey: openRouterApiKey,
+        allergies,
+        bloodGroup,
+        chronicDiseases,
+        medicines,
+        reports,
+      });
+
+      downloadTextFile("medivault-doctor-summary.txt", buildDownloadText(summary));
+    } catch (error) {
+      setSummaryError(
+        error instanceof Error
+          ? error.message
+          : "The doctor summary could not be generated right now.",
+      );
+    } finally {
+      setIsGeneratingSummary(false);
+    }
+  }
+
   return (
     <div className="space-y-6">
       <section className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
@@ -59,10 +145,31 @@ export default function Dashboard() {
             same shared report source.
           </p>
         </div>
-        <div className="rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-sm font-medium text-blue-700">
-          {renderDashboardStatus()}
+        <div className="flex flex-col gap-3 md:items-end">
+          <button
+            type="button"
+            onClick={() => void handleDownloadSummary()}
+            disabled={!hasApiKey || isGeneratingSummary}
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-brand-blue px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isGeneratingSummary ? (
+              <LoaderCircle size={18} className="animate-spin" />
+            ) : (
+              <Download size={18} />
+            )}
+            {isGeneratingSummary ? "Generating..." : "Download summary"}
+          </button>
+          <div className="rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-sm font-medium text-blue-700">
+            {renderDashboardStatus()}
+          </div>
         </div>
       </section>
+
+      {summaryError && (
+        <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">
+          {summaryError}
+        </div>
+      )}
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {overviewStats.map(({ label, value, icon: Icon, tone }) => (

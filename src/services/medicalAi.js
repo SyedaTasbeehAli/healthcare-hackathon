@@ -575,3 +575,99 @@ export async function recommendDoctorWithAi({
     summary: normalizeText(aiResult.summary),
   };
 }
+
+export async function generateDoctorShareSummary({
+  apiKey,
+  allergies,
+  bloodGroup,
+  chronicDiseases,
+  medicines,
+  reports,
+}) {
+  const completedReports = reports
+    .filter((report) => report.processingState === "complete")
+    .slice(0, 8);
+  const otherReports = reports
+    .filter((report) => report.processingState !== "complete")
+    .slice(0, 6);
+
+  const aiResult = await requestStructuredMedicalJson({
+    apiKey,
+    maxTokens: 1800,
+    messages: [
+      {
+        role: "system",
+        content:
+          "You create concise doctor-share visit summaries from patient-held medical records. You do not diagnose, prescribe, or claim certainty. Use only the supplied app data and return strict JSON only.",
+      },
+      {
+        role: "user",
+        content: JSON.stringify(
+          {
+            medicalProfile: {
+              bloodGroup,
+              allergies: allergies.map((item) => item.name),
+              chronicConditions: chronicDiseases.map((item) => item.name),
+            },
+            medicines: medicines.map((medicine) => ({
+              name: medicine.name,
+              dosage: medicine.dosage,
+              frequency: medicine.frequency,
+              mg: medicine.mg,
+            })),
+            processedReports: completedReports.map((report) => ({
+              title: report.name || report.title,
+              category: report.category,
+              uploadedAt: report.uploadedAt,
+              summary: report.aiSummary,
+              keyFindings: report.bulletSummary || [],
+              keywords: report.keywords || [],
+              mentionedMedicines: report.mentionedMedicines || [],
+              possibleSpecialties: report.possibleSpecialties || [],
+              safetyNote: report.safetyNote,
+            })),
+            pendingOrFailedReports: otherReports.map((report) => ({
+              title: report.name || report.title,
+              category: report.category,
+              uploadedAt: report.uploadedAt,
+              status: report.status,
+              notes: report.notes,
+            })),
+            returnShape: {
+              overview: "string",
+              reportsReviewed: ["string"],
+              currentMedicines: ["string"],
+              allergiesAndConditions: ["string"],
+              possibleConcerns: ["string"],
+              suggestedDoctorDiscussionPoints: ["string"],
+              safetyNote: "string",
+            },
+            rules: [
+              "Do not diagnose.",
+              "Use phrases like possible concerns, AI-assisted summary, and not a medical diagnosis.",
+              "Mention missing or pending data when relevant.",
+              "Keep it concise enough to share before a doctor visit.",
+            ],
+          },
+          null,
+          2,
+        ),
+      },
+    ],
+  });
+
+  return {
+    overview: normalizeText(aiResult.overview),
+    reportsReviewed: normalizeStringArray(aiResult.reportsReviewed, 10),
+    currentMedicines: normalizeStringArray(aiResult.currentMedicines, 10),
+    allergiesAndConditions: normalizeStringArray(aiResult.allergiesAndConditions, 10),
+    possibleConcerns: normalizeStringArray(aiResult.possibleConcerns, 8),
+    suggestedDoctorDiscussionPoints: normalizeStringArray(
+      aiResult.suggestedDoctorDiscussionPoints,
+      8,
+    ),
+    safetyNote:
+      normalizeText(aiResult.safetyNote) ||
+      "AI-assisted summary for doctor discussion only. Not a medical diagnosis.",
+  };
+}
